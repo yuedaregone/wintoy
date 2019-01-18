@@ -7,4 +7,11 @@ void InitFramework(int width, int height, void* window);
 void UpdateFramework();
 void EndFramework();
 
+bool TouchBegin(int x, int y);
+void TouchMove(int x, int y);
+void TouchEnd(int x, int y);
+
+void TouchNext();
+void TouchBack();
+
 #endif

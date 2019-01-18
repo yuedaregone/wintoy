@@ -55,6 +55,6 @@ GLuint loadShaders(const char* vertexStr, const char* fragmentStr)
 
 	glDeleteShader(vertexShaderId);
 	glDeleteShader(fragmentShaderId);
-	
+
 	return programId;
 }

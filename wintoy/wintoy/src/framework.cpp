@@ -96,14 +96,23 @@ GLuint vertexPosID = 0;
 GLuint uvID = 0;
 GLuint uniformTimeID = 0;
 GLuint resolutionID = 0;
+GLuint mouseID = 0;
+
+int iMouseX = 0;
+int iMouseY = 0;
 
 std::string curShader;
 
-void ReloadShaderData()
-{	
+void FindPreShader()
+{
 	std::string path = GetCurrentPath();
 	std::vector<std::string> filenames;
 	LoadAllFileNames(path.c_str(), filenames, false, ".toy");
+
+	if (filenames.empty())
+	{
+		return;
+	}
 
 	if (curShader.empty())
 	{
@@ -112,7 +121,36 @@ void ReloadShaderData()
 	else
 	{
 		std::vector<std::string>::iterator it = std::find(filenames.begin(), filenames.end(), curShader);
-		if (it == filenames.end())
+		if (it == filenames.end() || it == filenames.begin())
+		{
+			curShader = filenames[filenames.size() - 1];
+		}
+		else
+		{
+			curShader = *(--it);
+		}
+	}
+}
+
+void FindNextShader()
+{
+	std::string path = GetCurrentPath();
+	std::vector<std::string> filenames;
+	LoadAllFileNames(path.c_str(), filenames, false, ".toy");
+
+	if (filenames.empty())
+	{
+		return;
+	}
+
+	if (curShader.empty())
+	{
+		curShader = filenames[0];
+	}
+	else
+	{
+		std::vector<std::string>::iterator it = std::find(filenames.begin(), filenames.end(), curShader);
+		if (it == filenames.end() || it + 1 == filenames.end())
 		{
 			curShader = filenames[0];
 		}
@@ -121,7 +159,10 @@ void ReloadShaderData()
 			curShader = *(++it);
 		}
 	}
+}
 
+void LoadShaderData()
+{	
 	std::string fragShader = startStr;
 	fragShader += GetShaderInFile(curShader.c_str());
 	fragShader += endStr;
@@ -133,6 +174,7 @@ void ReloadShaderData()
 	vertexColorID = glGetAttribLocation(shader, "vertextColor");
 	uniformTimeID = glGetUniformLocation(shader, "iTime");
 	resolutionID = glGetUniformLocation(shader, "iResolution");
+	mouseID = glGetUniformLocation(shader, "iMouse");
 }
 
 void InitBuffData()
@@ -183,49 +225,25 @@ void InitBuffData()
 
 static void DestroyOpenGL()
 {
+	glDeleteBuffers(1, &vertex);
+	glDeleteBuffers(1, &uv);
+	glDeleteBuffers(1, &color);
 
+	glDeleteProgram(shader);
 }
 
 static void Render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	/*
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glBegin(GL_TRIANGLES);
-
-	glColor4f(0.2f, 0.5f, 0.2f, 0.5f);
-	glVertex3f(-1.0f, -1.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, 0.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
-
-	glEnd();
-
-	glBegin(GL_TRIANGLES);
-
-	glColor4f(0.7f, 0.3f, 0.1f, 0.5f);
-	glVertex3f(-1.0f, -1.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, 0.0f);
-	glVertex3f(1.0f, 1.0f, 0.0f);
-
-	glEnd();
-	*/
 
 	glUseProgram(shader);	
 	glUniform1f(uniformTimeID, Time::time());
 	glUniform2f(resolutionID, (GLfloat)s_width, (GLfloat)s_height);
+	glUniform2f(mouseID, (GLfloat)iMouseX, (GLfloat)iMouseY);
 
 	glEnableVertexAttribArray(vertexPosID);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex);
-	glVertexAttribPointer(
-		vertexPosID,		// attribute 0. No particular reason for 0, but must match the layout in the shader.
-		3,					// size
-		GL_FLOAT,			// type
-		GL_FALSE,			// normalized?
-		0,					// stride
-		(void*)0);			// array buffer offset
+	glVertexAttribPointer(vertexPosID, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	glEnableVertexAttribArray(uvID);
 	glBindBuffer(GL_ARRAY_BUFFER, uv);
@@ -235,7 +253,7 @@ static void Render()
 	glBindBuffer(GL_ARRAY_BUFFER, color);
 	glVertexAttribPointer(vertexColorID, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6); // Starting from vertex 1; 3 vertices total -&gt; 1 triangle
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableVertexAttribArray(vertexPosID);
 	glDisableVertexAttribArray(vertexColorID);
 	
@@ -246,7 +264,8 @@ void InitFramework(int width, int height, void* window)
 {
 	InitOpenGL(width, height);	
 	InitBuffData();
-	ReloadShaderData();
+	FindNextShader();
+	LoadShaderData();
 }
 
 void UpdateFramework()
@@ -257,4 +276,32 @@ void UpdateFramework()
 void EndFramework()
 {
 	DestroyOpenGL();
+}
+
+bool TouchBegin(int x, int y)
+{
+	return true;
+}
+
+void TouchMove(int x, int y)
+{
+	iMouseX = x;
+	iMouseY = y;
+}
+
+void TouchEnd(int x, int y)
+{
+}
+
+
+void TouchNext()
+{
+	FindNextShader();
+	LoadShaderData();
+}
+
+void TouchBack()
+{
+	FindPreShader();
+	LoadShaderData();
 }
