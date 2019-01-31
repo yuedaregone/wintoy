@@ -1,6 +1,5 @@
 #include "framework.h"
 #include "GL\glew.h"
-#include <time.h>
 #include "ftime.h"
 #include <stdio.h>
 #include <iostream>
@@ -8,6 +7,7 @@
 #include <string>
 #include "shader.h"
 #include "tools.h"
+#include "timer.h"
 
 const char* verStr = "\
 #version 120													\n\
@@ -259,6 +259,11 @@ static void Render()
 	
 }
 
+static void OnTimeCheckUpdate()
+{
+	
+}
+
 
 void InitFramework(int width, int height, void* window)
 {
@@ -266,10 +271,14 @@ void InitFramework(int width, int height, void* window)
 	InitBuffData();
 	FindNextShader();
 	LoadShaderData();
+
+	char name[16] = { "update" };
+	timer_create_timer_day(name, 32400, OnTimeCheckUpdate);
 }
 
 void UpdateFramework()
 {
+	timer_update();
 	Render();
 }
 

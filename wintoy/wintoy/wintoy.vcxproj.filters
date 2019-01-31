@@ -21,6 +21,9 @@
     <ClCompile Include="src\tools.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\timer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\console.h">
@@ -36,6 +39,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\tools.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\timer.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

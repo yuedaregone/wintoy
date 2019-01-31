@@ -1,5 +1,6 @@
 #include "tools.h"
 #include <windows.h>
+#include <time.h>
 
 std::string GetPath(std::string p)
 {
@@ -68,5 +69,21 @@ void LoadAllFileNames(const char* path, std::vector<std::string>& files, bool su
 		}
 	} while (FindNextFile(handle, &findData));
 	FindClose(handle);
+}
+
+int GetStartSecondToday()
+{
+	time_t t;
+	t = time(&t);
+	struct tm* _tm = localtime(&t);
+	return _tm->tm_hour * 3600 + _tm->tm_min * 60 + _tm->tm_sec;
+}
+
+int GetStartSecondHour()
+{
+	time_t t;
+	t = time(&t);
+	struct tm* _tm = localtime(&t);
+	return _tm->tm_min * 60 + _tm->tm_sec;
 }
 

@@ -10,3 +10,6 @@ std::string GetPath(std::string p);
 std::string GetCurrentPath();
 void LoadAllFileNames(const char* path, std::vector<std::string>& files, bool subdir, const char* subfix = NULL);
 
+int GetStartSecondToday();
+int GetStartSecondHour();
+

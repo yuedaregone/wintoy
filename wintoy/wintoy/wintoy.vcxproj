@@ -22,6 +22,7 @@
     <ClCompile Include="src\framework.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\ftime.cpp" />
+    <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\tools.cpp" />
     <ClCompile Include="src\wintoy.cpp" />
   </ItemGroup>
@@ -30,6 +31,7 @@
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\ftime.h" />
+    <ClInclude Include="src\timer.h" />
     <ClInclude Include="src\tools.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
