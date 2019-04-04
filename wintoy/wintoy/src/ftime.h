@@ -1,6 +1,6 @@
 #ifndef __MTIME_H__
 #define __MTIME_H__
-#include <windows.h>
+#include "wintoy.h"
 class Time
 {
 public:

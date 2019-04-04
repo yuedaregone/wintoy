@@ -44,5 +44,8 @@
     <ClInclude Include="src\timer.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\wintoy.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

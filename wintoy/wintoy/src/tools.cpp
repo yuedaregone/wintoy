@@ -1,5 +1,5 @@
+#include "wintoy.h"
 #include "tools.h"
-#include <windows.h>
 #include <time.h>
 
 std::string GetPath(std::string p)

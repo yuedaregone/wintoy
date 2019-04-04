@@ -9,6 +9,18 @@
 #include "tools.h"
 #include "timer.h"
 
+
+#ifdef __cplusplus 
+extern "C" {
+#endif
+#include "http.h"
+#include "buffer.h"
+#include "skt.h"
+#ifdef __cplusplus 
+}
+#endif
+
+
 const char* verStr = "\
 #version 120													\n\
 attribute vec3 vertexPosition_modelspace;						\n\
@@ -161,6 +173,24 @@ void FindNextShader()
 	}
 }
 
+bool IsFindFile(const char* name)
+{
+	std::string path = GetCurrentPath();
+	std::vector<std::string> filenames;
+	LoadAllFileNames(path.c_str(), filenames, false, ".toy");
+
+	if (filenames.empty())
+	{
+		return false;
+	}
+	std::vector<std::string>::iterator it = std::find(filenames.begin(), filenames.end(), name);
+	if (it == filenames.end())
+	{
+		return false;
+	}
+	return true;
+}
+
 void LoadShaderData()
 {	
 	std::string fragShader = startStr;
@@ -264,6 +294,15 @@ static void OnTimeCheckUpdate()
 	
 }
 
+static void http_client_over(struct http_respond* resp)
+{
+	printf((const char*)resp->data->buf);
+}
+
+static void http_client_list_over(struct http_respond* resp)
+{
+	//resp->data
+}
 
 void InitFramework(int width, int height, void* window)
 {
@@ -272,14 +311,20 @@ void InitFramework(int width, int height, void* window)
 	FindNextShader();
 	LoadShaderData();
 
-	char name[16] = { "update" };
-	timer_create_timer_day(name, 32400, OnTimeCheckUpdate);
+	//char name[16] = { "update" };
+	//timer_create_timer_day(name, 32400, OnTimeCheckUpdate);
+
+	struct http_client* clt = http_client_get("http://daregone.pythonanywhere.com/wintoy?method=list", NULL);
+	clt->cb = http_client_list_over;
+	http_client_send(clt);
 }
 
 void UpdateFramework()
 {
 	timer_update();
 	Render();
+
+	http_client_update();
 }
 
 void EndFramework()
