@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+*.sdf
 
 # Precompiled Headers
 *.gch
@@ -23,14 +24,14 @@
 # Compiled Static libraries
 *.lai
 *.la
-*.a
-*.lib
+
 
 # Executables
-*.exe
+
 *.out
 *.app
 
 .vs/
 Debug/
 Release/
+ipch/

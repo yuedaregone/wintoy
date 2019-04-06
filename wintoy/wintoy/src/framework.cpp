@@ -20,6 +20,9 @@ extern "C" {
 }
 #endif
 
+static void FetchFileLists();
+static void FetchFileContent(const char* filename);
+
 
 const char* verStr = "\
 #version 120													\n\
@@ -294,16 +297,6 @@ static void OnTimeCheckUpdate()
 	
 }
 
-static void http_client_over(struct http_respond* resp)
-{
-	printf((const char*)resp->data->buf);
-}
-
-static void http_client_list_over(struct http_respond* resp)
-{
-	//resp->data
-}
-
 void InitFramework(int width, int height, void* window)
 {
 	InitOpenGL(width, height);	
@@ -312,11 +305,9 @@ void InitFramework(int width, int height, void* window)
 	LoadShaderData();
 
 	//char name[16] = { "update" };
-	//timer_create_timer_day(name, 32400, OnTimeCheckUpdate);
+	//timer_create_timer_day(name, 32400, OnTimeCheckUpdate);	
 
-	struct http_client* clt = http_client_get("http://daregone.pythonanywhere.com/wintoy?method=list", NULL);
-	clt->cb = http_client_list_over;
-	http_client_send(clt);
+	FetchFileLists();
 }
 
 void UpdateFramework()
@@ -359,3 +350,73 @@ void TouchBack()
 	FindPreShader();
 	LoadShaderData();
 }
+
+static void OnFetchFileLists(struct http_respond* resp)
+{
+	int len = buf_size_data(resp->data);
+	char* buf = (char*)_alloca(len + 1);
+	buf_read_data(resp->data, (int8_t*)buf, len);
+	buf[len] = '\0';
+	
+	std::vector<std::string> filenames;
+
+	std::string str = buf;
+	size_t start = 0;
+	size_t pos = 0;
+	while ((pos = str.find(',', start)) != std::string::npos)
+	{
+		std::string name = str.substr(start, pos - start);
+		if (!name.empty())
+		{
+			filenames.push_back(name);
+		}
+		start = pos + 1;		
+	}
+	for (int i = 0; i < filenames.size(); ++i)
+	{
+		FetchFileContent(filenames[i].c_str());		
+	}
+	
+}
+
+static void FetchFileLists()
+{
+	struct http_client* clt = http_client_get("http://daregone.pythonanywhere.com/wintoy?method=list", NULL);
+	clt->cb = OnFetchFileLists;
+	http_client_send(clt);
+}
+
+static void OnFetchFileContent(struct http_respond* resp)
+{
+	char name[256] = { 0 };
+	http_request_get_path(resp->req, name, 256);
+
+	std::string filename = name;
+	if (filename.empty())
+		return;
+
+	filename = filename.substr(filename.find("name=") + strlen("name="));
+
+	int len = buf_size_data(resp->data);
+	char* buf = (char*)_alloca(len + 1);
+	buf_read_data(resp->data, (int8_t*)buf, len);
+	buf[len] = '\0';
+
+	FILE *fp = fopen(filename.c_str(), "wb");
+	if (fp != NULL)
+	{
+		fwrite(buf, 1, len, fp);
+	}
+	fclose(fp);
+}
+
+
+static void FetchFileContent(const char* filename)
+{
+	std::string reqUrl = "http://daregone.pythonanywhere.com/wintoy?method=file&name=";
+	reqUrl += filename;
+	struct http_client* clt = http_client_get(reqUrl.c_str(), NULL);
+	clt->cb = OnFetchFileContent;
+	http_client_send(clt);
+}
+
