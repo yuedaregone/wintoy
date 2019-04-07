@@ -26,12 +26,12 @@ static void FetchFileContent(const char* filename);
 
 
 const char* verStr = "\
-#version 120													\n\
-attribute vec3 vertexPosition_modelspace;						\n\
-attribute vec4 vertextColor;									\n\
-attribute vec2 uv;												\n\
-varying vec4 vColor;											\n\
-varying vec2 fragCoord;											\n\
+#version 330													\n\
+in vec3 vertexPosition_modelspace;						\n\
+in vec4 vertextColor;									\n\
+in vec2 uv;												\n\
+out vec4 vColor;											\n\
+out vec2 fragCoord;											\n\
 void main(){													\n\
 	gl_Position = vec4(vertexPosition_modelspace, 1.0);			\n\
 	fragCoord =	uv;												\n\
@@ -41,19 +41,20 @@ void main(){													\n\
 ";
 
 const char* startStr = "\
-#version 120											\n\
-varying vec4 vColor;									\n\
-varying vec2 fragCoord;									\n\
+#version 330											\n\
+in vec4 vColor;									\n\
+in vec2 fragCoord;									\n\
 uniform vec2 iResolution;								\n\
 uniform vec2 iMouse;								\n\
-uniform float iTime; \n";
+uniform float iTime;								\n\
+out vec4 g_fragColor;									\n";
 const char* endStr = "\
 void main() {												\n\
 	vec2 p = fragCoord;										\n\
 	p = p * iResolution;									\n\
 	vec4 fragColor = vec4(fragCoord.x,fragCoord.y,0,1);		\n\
 	mainImage(fragColor, p);								\n\
-	gl_FragColor = fragColor;								\n\
+	g_fragColor = fragColor;								\n\
 }															\n\
 ";
 
@@ -89,10 +90,10 @@ static void InitOpenGL(int width, int height)
 	glClearColor(0, 0, 0, 0);
 
 	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
+	//glMatrixMode(GL_PROJECTION);
 	//glLoadIdentity();
 	//glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	//glLoadIdentity();
 }
 
 std::string GetShaderInFile(const char* filename)
@@ -224,6 +225,10 @@ void LoadShaderData()
 
 	shader = loadShaders(verStr, fragShader.c_str());
 
+	//GLenum glerror = glGetError();
+	//if (glerror != GL_NO_ERROR)
+	//	printf(glErrorStringREGAL(glerror));
+
 	vertexPosID = glGetAttribLocation(shader, "vertexPosition_modelspace");
 	uvID = glGetAttribLocation(shader, "uv");
 	vertexColorID = glGetAttribLocation(shader, "vertextColor");
@@ -325,9 +330,6 @@ void InitFramework(int width, int height, void* window)
 	InitBuffData();
 	FindNextShader();
 	LoadShaderData();
-	
-	if (curShader.empty())
-		FetchFileLists();
 
 	char name[16] = { "update" };
 	timer_create_timer_day(name, 32400, OnTimeCheckUpdate);
