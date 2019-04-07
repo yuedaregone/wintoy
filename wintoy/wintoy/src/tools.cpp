@@ -1,6 +1,10 @@
 #include "wintoy.h"
 #include "tools.h"
 #include <time.h>
+#include <io.h>
+#include <direct.h>
+
+#define WORK_DIR ".wintoy"
 
 std::string GetPath(std::string p)
 {
@@ -27,6 +31,25 @@ std::string GetCurrentPath()
 	char buff[512] = { 0 };
 	GetCurrentDirectory(512, buff);
 	return buff;
+}
+
+std::string GetUserPath()
+{
+	char buff[512] = { 0 };
+	GetEnvironmentVariable("USERPROFILE", buff, 512);
+	return buff;
+}
+
+std::string GetOrCreateWorkPath()
+{
+	std::string path = GetUserPath();
+	path += "\\";
+	path += WORK_DIR;
+	if (_access(path.c_str(), 0) != 0)
+	{
+		_mkdir(path.c_str());
+	}
+	return path;
 }
 
 void LoadAllFileNames(const char* path, std::vector<std::string>& files, bool subdir, const char* subfix)

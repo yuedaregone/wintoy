@@ -8,6 +8,7 @@
 #include "shader.h"
 #include "tools.h"
 #include "timer.h"
+#include <time.h>
 
 
 #ifdef __cplusplus 
@@ -55,6 +56,16 @@ void main() {												\n\
 	gl_FragColor = fragColor;								\n\
 }															\n\
 ";
+
+const char* defaultShader = "\
+void mainImage( out vec4 fragColor, in vec2 fragCoord )     \n\
+{															\n\
+	vec2 uv = fragCoord / iResolution.xy;					\n\
+	vec3 col = 0.5 + 0.5*cos(iTime + uv.xyx + vec3(0, 2, 4)); \n\
+	fragColor = vec4(col, 1.0);									\n\
+}															\n\
+";
+
 int s_width = 0;
 int s_height = 0;
 
@@ -68,7 +79,8 @@ static void InitOpenGL(int width, int height)
 	s_width = width;
 	s_height = height;
 
-	//glEnable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_COLOR_MATERIAL);
 	//glEnable(GL_LIGHTING);
@@ -120,7 +132,7 @@ std::string curShader;
 
 void FindPreShader()
 {
-	std::string path = GetCurrentPath();
+	std::string path = GetOrCreateWorkPath();
 	std::vector<std::string> filenames;
 	LoadAllFileNames(path.c_str(), filenames, false, ".toy");
 
@@ -149,7 +161,7 @@ void FindPreShader()
 
 void FindNextShader()
 {
-	std::string path = GetCurrentPath();
+	std::string path = GetOrCreateWorkPath();
 	std::vector<std::string> filenames;
 	LoadAllFileNames(path.c_str(), filenames, false, ".toy");
 
@@ -160,7 +172,9 @@ void FindNextShader()
 
 	if (curShader.empty())
 	{
-		curShader = filenames[0];
+		srand((unsigned int)time(NULL));
+		int rd = rand() % filenames.size();
+		curShader = filenames[rd];
 	}
 	else
 	{
@@ -178,7 +192,7 @@ void FindNextShader()
 
 bool IsFindFile(const char* name)
 {
-	std::string path = GetCurrentPath();
+	std::string path = GetOrCreateWorkPath();
 	std::vector<std::string> filenames;
 	LoadAllFileNames(path.c_str(), filenames, false, ".toy");
 
@@ -197,7 +211,15 @@ bool IsFindFile(const char* name)
 void LoadShaderData()
 {	
 	std::string fragShader = startStr;
-	fragShader += GetShaderInFile(curShader.c_str());
+	std::string content = GetShaderInFile(curShader.c_str());
+	if (curShader.empty() || content.empty())
+	{
+		fragShader += defaultShader;
+	}
+	else
+	{
+		fragShader += content;
+	}	
 	fragShader += endStr;
 
 	shader = loadShaders(verStr, fragShader.c_str());
@@ -294,7 +316,7 @@ static void Render()
 
 static void OnTimeCheckUpdate()
 {
-	
+	FetchFileLists();
 }
 
 void InitFramework(int width, int height, void* window)
@@ -303,11 +325,12 @@ void InitFramework(int width, int height, void* window)
 	InitBuffData();
 	FindNextShader();
 	LoadShaderData();
+	
+	if (curShader.empty())
+		FetchFileLists();
 
-	//char name[16] = { "update" };
-	//timer_create_timer_day(name, 32400, OnTimeCheckUpdate);	
-
-	FetchFileLists();
+	char name[16] = { "update" };
+	timer_create_timer_day(name, 32400, OnTimeCheckUpdate);
 }
 
 void UpdateFramework()
@@ -358,6 +381,10 @@ static void OnFetchFileLists(struct http_respond* resp)
 	buf_read_data(resp->data, (int8_t*)buf, len);
 	buf[len] = '\0';
 	
+	std::string path = GetOrCreateWorkPath();
+	std::vector<std::string> localFiles;
+	LoadAllFileNames(path.c_str(), localFiles, false, ".toy");
+	
 	std::vector<std::string> filenames;
 
 	std::string str = buf;
@@ -366,13 +393,14 @@ static void OnFetchFileLists(struct http_respond* resp)
 	while ((pos = str.find(',', start)) != std::string::npos)
 	{
 		std::string name = str.substr(start, pos - start);
-		if (!name.empty())
+		if (!name.empty() && std::find(localFiles.begin(), localFiles.end(), name) == localFiles.end())
 		{
 			filenames.push_back(name);
 		}
 		start = pos + 1;		
 	}
-	for (int i = 0; i < filenames.size(); ++i)
+
+	for (size_t i = 0; i < filenames.size(); ++i)
 	{
 		FetchFileContent(filenames[i].c_str());		
 	}
@@ -402,7 +430,8 @@ static void OnFetchFileContent(struct http_respond* resp)
 	buf_read_data(resp->data, (int8_t*)buf, len);
 	buf[len] = '\0';
 
-	FILE *fp = fopen(filename.c_str(), "wb");
+	std::string path = GetOrCreateWorkPath();
+	FILE *fp = fopen((path + "\\" + filename).c_str(), "wb");
 	if (fp != NULL)
 	{
 		fwrite(buf, 1, len, fp);
