@@ -49,10 +49,11 @@ uniform vec2 iMouse;								\n\
 uniform float iTime;								\n\
 out vec4 g_fragColor;									\n";
 const char* endStr = "\
-void main() {												\n\
+void main()										\n\
+{												\n\
 	vec2 p = fragCoord;										\n\
 	p = p * iResolution;									\n\
-	vec4 fragColor = vec4(fragCoord.x,fragCoord.y,0,1);		\n\
+	vec4 fragColor = vec4(fragCoord.x,fragCoord.y,0.0,1.0);		\n\
 	mainImage(fragColor, p);								\n\
 	g_fragColor = fragColor;								\n\
 }															\n\
@@ -321,7 +322,7 @@ static void Render()
 
 static void OnTimeCheckUpdate()
 {
-	FetchFileLists();
+	//FetchFileLists();
 }
 
 void InitFramework(int width, int height, void* window)
